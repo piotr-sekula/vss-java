@@ -40,9 +40,9 @@ class HashServiceTest {
         final var hashResponse = service.calculatePasswordHash(request);
 
         // then
-        assertEquals(expected, hashResponse.getHash());
-        assertEquals(password, hashResponse.getPassword());
-        assertEquals(hashType, hashResponse.getHashType());
+        assertEquals(expected, hashResponse.hash());
+        assertEquals(password, hashResponse.password());
+        assertEquals(hashType, hashResponse.hashType());
     }
 
     @Test
