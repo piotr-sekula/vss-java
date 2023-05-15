@@ -1,7 +1,7 @@
 package com.virtuslab.vssjava.controller;
 
+import com.virtuslab.vssjava.domain.Password;
 import com.virtuslab.vssjava.service.HashService;
-import com.virtuslab.vssjava.view.HashResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,9 +24,10 @@ public class HashController {
     }
 
     @PostMapping(value = "/hash")
-    HashResponse calculateHash(@RequestBody HashRequest request) {
+    PasswordWithHashView calculateHash(@RequestBody HashRequest request) {
         try {
-            return hashService.calculatePasswordHash(request);
+            Password password = hashService.calculatePasswordHash(request);
+            return PasswordWithHashView.fromPassword(password);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown hashing algorithm: " + request.hashType());
         }

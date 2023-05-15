@@ -1,7 +1,8 @@
 package com.virtuslab.vssjava.service;
 
 import com.virtuslab.vssjava.controller.HashRequest;
-import com.virtuslab.vssjava.view.HashResponse;
+import com.virtuslab.vssjava.domain.Password;
+import com.virtuslab.vssjava.domain.PasswordRepository;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.stereotype.Service;
@@ -9,16 +10,25 @@ import org.springframework.stereotype.Service;
 @Service
 public class HashService {
 
-    public HashResponse calculatePasswordHash(HashRequest request) {
+    private final PasswordRepository passwordRepository;
 
-        final var digest1 = DigestUtils
+    public HashService(PasswordRepository passwordRepository) {
+        this.passwordRepository = passwordRepository;
+    }
+
+    public Password calculatePasswordHash(HashRequest request) {
+
+        final var digest = DigestUtils
                 .getDigest(request.hashType())
                 .digest(request.password().getBytes());
 
-        return new HashResponse(
+        final var password = new Password(
                 request.hashType(),
                 request.password(),
-                HexUtils.toHexString(digest1)
+                HexUtils.toHexString(digest)
         );
+
+        passwordRepository.save(password);
+        return password;
     }
 }
