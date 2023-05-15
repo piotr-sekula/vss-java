@@ -22,13 +22,13 @@ class PasswordEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID uuid;
 
-    private String password;
+    private final String password;
 
     @Column(name = "hash_type")
-    private String hashType;
+    private final String hashType;
 
     @Column(name = "password_hash")
-    private String passwordHash;
+    private final String passwordHash;
 
     public String getPassword() {
         return password;
