@@ -1,6 +1,7 @@
 package com.virtuslab.vssjava.service;
 
 import com.virtuslab.vssjava.controller.HashRequest;
+import com.virtuslab.vssjava.events.Producer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,7 +31,7 @@ class HashServiceTest {
     @BeforeEach
     void setup() {
         repository = new DummyPasswordRepository();
-        service = new HashService(repository);
+        service = new HashService(repository, new Producer());
     }
 
     @ParameterizedTest
