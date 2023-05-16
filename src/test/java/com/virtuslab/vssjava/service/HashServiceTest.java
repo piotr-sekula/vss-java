@@ -15,7 +15,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class HashServiceTest {
 
     private HashService service;
+    private DummyPasswordRepository repository;
 
+    // expected hashes taken from: https://www.md5hashgenerator.com/
     public static Stream<Arguments> passwordsFixture() {
         return Stream.of(
                 Arguments.of("P@ssw0rd!", "MD5", "8a24367a1f46c141048752f2d5bbd14b"),
@@ -27,7 +29,8 @@ class HashServiceTest {
 
     @BeforeEach
     void setup() {
-        service = new HashService();
+        repository = new DummyPasswordRepository();
+        service = new HashService(repository);
     }
 
     @ParameterizedTest
@@ -43,6 +46,20 @@ class HashServiceTest {
         assertEquals(expected, hashResponse.hash());
         assertEquals(password, hashResponse.password());
         assertEquals(hashType, hashResponse.hashType());
+    }
+
+    @Test
+    void shouldStoreHashInDatabase() {
+        // given
+        HashRequest request = new HashRequest("MD5", "abc@@");
+
+        // when
+        service.calculatePasswordHash(request);
+
+        // then
+        final var found = repository.getByHash("2e15e23d6f2361d82a13ae589b360462");
+        assertEquals("abc@@", found.password());
+        assertEquals("MD5", found.hashType());
     }
 
     @Test

@@ -8,6 +8,12 @@ import java.util.UUID;
 @Entity(name = "hashed_passwords")
 class PasswordEntity {
 
+    public PasswordEntity() {
+        this.password = "";
+        this.hashType = "";
+        this.passwordHash = "";
+    }
+
     private PasswordEntity(String password, String hashType, String passwordHash) {
         this.password = password;
         this.hashType = hashType;
