@@ -8,7 +8,7 @@ class PasswordSerializer {
 
     static String serializePassword(Password password) {
         ObjectMapper mapper = new ObjectMapper();
-        String json = null;
+        String json;
 
         try {
             json = mapper.writeValueAsString(password);
