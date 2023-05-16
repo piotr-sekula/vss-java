@@ -1,7 +1,6 @@
 package com.virtuslab.vssjava.service;
 
 import com.virtuslab.vssjava.controller.HashRequest;
-import com.virtuslab.vssjava.events.Producer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,6 +16,7 @@ class HashServiceTest {
 
     private HashService service;
     private DummyPasswordRepository repository;
+    private DummyEventPublisher eventPublisher;
 
     // expected hashes taken from: https://www.md5hashgenerator.com/
     public static Stream<Arguments> passwordsFixture() {
@@ -31,7 +31,8 @@ class HashServiceTest {
     @BeforeEach
     void setup() {
         repository = new DummyPasswordRepository();
-        service = new HashService(repository, new Producer());
+        eventPublisher = new DummyEventPublisher();
+        service = new HashService(repository, eventPublisher);
     }
 
     @ParameterizedTest
@@ -61,6 +62,22 @@ class HashServiceTest {
         final var found = repository.getByHash("2e15e23d6f2361d82a13ae589b360462");
         assertEquals("abc@@", found.password());
         assertEquals("MD5", found.hashType());
+    }
+
+    @Test
+    void shouldSendPasswordToKafka() {
+        // given
+        HashRequest request = new HashRequest("MD5", "def##");
+
+        // when
+        service.calculatePasswordHash(request);
+
+        // then
+        final var events = eventPublisher.readAllEvents();
+        assertEquals(1, events.size());
+        assertEquals("MD5", events.get(0).hashType());
+        assertEquals("def##", events.get(0).password());
+        assertEquals("8bb5f7e624b039051f7cefc0b176a2b4", events.get(0).hash());
     }
 
     @Test
