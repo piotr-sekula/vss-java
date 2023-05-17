@@ -3,17 +3,13 @@ package com.virtuslab.vssjava.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.virtuslab.vssjava.controller.HashRequest;
 import com.virtuslab.vssjava.domain.PasswordRepository;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
+import com.virtuslab.vssjava.support.KafkaSupport;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.rnorth.ducttape.unreliables.Unreliables;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.util.TestPropertyValues;
@@ -25,14 +21,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
-import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 
 import java.time.Duration;
 import java.util.Collections;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -67,6 +61,16 @@ public class PasswordHashIntegrationTest extends AbstractIntegrationTest {
     @BeforeAll
     public void setup() {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
+    }
+
+    @BeforeEach
+    void beforeEach() {
+        KafkaSupport.createTopic(KAFKA_CONTAINER, TOPIC_NAME);
+    }
+
+    @AfterEach
+    void afterEach() {
+        KafkaSupport.resetKafka(KAFKA_CONTAINER);
     }
 
     @Test
@@ -118,8 +122,7 @@ public class PasswordHashIntegrationTest extends AbstractIntegrationTest {
     @Test
     void shouldSendPasswordToKafka() throws Exception {
         // given
-        var password = UUID.randomUUID().toString();
-        final var request = new HashRequest("MD5", password);
+        final var request = new HashRequest("MD5", "123!@#abc");
 
         // when
         this.mockMvc
@@ -132,10 +135,10 @@ public class PasswordHashIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk());
 
         // then
-        var consumer = createKafkaConsumer();
+        var consumer = KafkaSupport.createKafkaConsumer(KAFKA_CONTAINER);
         consumer.subscribe(Collections.singletonList(TOPIC_NAME));
 
-        assertEventIsInQueue(consumer, password);
+        assertEventIsInQueue(consumer);
 
         consumer.unsubscribe();
     }
@@ -163,35 +166,26 @@ public class PasswordHashIntegrationTest extends AbstractIntegrationTest {
         }
     }
 
-    private static KafkaConsumer<String, String> createKafkaConsumer() {
-        return new KafkaConsumer<>(
-                ImmutableMap.of(
-                        ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                        KAFKA_CONTAINER.getBootstrapServers(),
-                        ConsumerConfig.GROUP_ID_CONFIG,
-                        "tc-" + UUID.randomUUID(),
-                        ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
-                        "earliest"
-                ),
-                new StringDeserializer(),
-                new StringDeserializer()
-        );
-    }
 
-    private static void assertEventIsInQueue(KafkaConsumer<String, String> consumer, String password) {
-        Unreliables.retryUntilTrue(
-                10,
-                TimeUnit.SECONDS,
-                () -> {
-                    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+    private static void assertEventIsInQueue(KafkaConsumer<String, String> consumer) {
+        final var startTime = System.currentTimeMillis();
+        final var timeoutInMillis = 10 * 1000; // 10 seconds
 
-                    if (records.isEmpty()) {
-                        return false;
-                    }
+        var eventFound = false;
+        while (System.currentTimeMillis() - startTime < timeoutInMillis) {
+            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
 
-                    assertThat(records.records(TOPIC_NAME)).anyMatch(r -> r.value().contains(password));
-                    return true;
-                }
-        );
+            if (!records.isEmpty()) {
+                assertThat(records.records(TOPIC_NAME))
+                        .hasSize(1)
+                        .extracting(ConsumerRecord::topic, ConsumerRecord::key, ConsumerRecord::value)
+                        .containsExactly(tuple(TOPIC_NAME, null, "{\"hashType\":\"MD5\",\"password\":\"123!@#abc\",\"hash\":\"452933f447fe6aaa46cae4860239ca72\"}"));
+                eventFound = true;
+                break;
+            }
+        }
+        if (!eventFound) {
+            throw new RuntimeException("event not found in the queue");
+        }
     }
 }
