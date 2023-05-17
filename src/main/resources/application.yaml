@@ -1,6 +1,10 @@
 server:
   port: 8088
 
+springdoc:
+  api-docs:
+    path: /api-docs
+
 spring:
   jpa:
     properties:
