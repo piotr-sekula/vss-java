@@ -13,7 +13,7 @@ class PasswordSerializerTest {
         Password password = new Password("MD5", "abc", "hash123");
 
         // when
-        final var result = PasswordSerializer.serializePassword(password);
+        final var result = PasswordSerializer.serializePassword(PasswordSavedEvent.fromPassword(password));
 
         // then
         assertEquals("{\"hashType\":\"MD5\",\"password\":\"abc\",\"hash\":\"hash123\"}", result);

@@ -2,16 +2,15 @@ package com.virtuslab.vssjava.events;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.virtuslab.vssjava.domain.Password;
 
 class PasswordSerializer {
 
-    static String serializePassword(Password password) {
+    static String serializePassword(PasswordSavedEvent event) {
         ObjectMapper mapper = new ObjectMapper();
         String json;
 
         try {
-            json = mapper.writeValueAsString(password);
+            json = mapper.writeValueAsString(event);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

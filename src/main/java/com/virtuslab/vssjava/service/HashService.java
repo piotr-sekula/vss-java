@@ -4,6 +4,7 @@ import com.virtuslab.vssjava.controller.HashRequest;
 import com.virtuslab.vssjava.domain.EventPublisher;
 import com.virtuslab.vssjava.domain.Password;
 import com.virtuslab.vssjava.domain.PasswordRepository;
+import com.virtuslab.vssjava.events.PasswordSavedEvent;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class HashService {
         );
 
         passwordRepository.save(password);
-        eventPublisher.publishEvent(password);
+        eventPublisher.publishEvent(PasswordSavedEvent.fromPassword(password));
         return password;
     }
 }
