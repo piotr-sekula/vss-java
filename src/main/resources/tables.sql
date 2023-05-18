@@ -3,7 +3,7 @@ create table hashed_passwords(
   password VARCHAR NOT NULL,
   hash_type VARCHAR NOT NULL,
   password_hash VARCHAR NOT NULL,
-  UNIQUE (hash_type, password)
+  UNIQUE (uuid)
 );
 
 create table pwned(

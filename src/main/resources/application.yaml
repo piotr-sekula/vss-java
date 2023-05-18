@@ -14,8 +14,9 @@ spring:
     url: jdbc:postgresql://localhost:5432/vssjava
     username: postgres
     password: postgres
+
+  # https://docs.spring.io/spring-boot/docs/current/reference/html/application-properties.html
   kafka:
+    topic: passwords
     producer:
       bootstrap-servers: localhost:9092
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer

@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ContextConfiguration(initializers = {PasswordHashIntegrationTest.Initializer.class})
 public class PasswordHashIntegrationTest extends AbstractIntegrationTest {
 
-    private static final String TOPIC_NAME = "passwords";
+    private static final String TOPIC_NAME = "passwords-test";
 
     private MockMvc mockMvc;
 
@@ -53,7 +53,8 @@ public class PasswordHashIntegrationTest extends AbstractIntegrationTest {
                     "spring.datasource.url=" + POSTGRES_CONTAINER.getJdbcUrl(),
                     "spring.datasource.username=" + POSTGRES_CONTAINER.getUsername(),
                     "spring.datasource.password=" + POSTGRES_CONTAINER.getPassword(),
-                    "spring.kafka.producer.bootstrap-servers=" + KAFKA_CONTAINER.getBootstrapServers()
+                    "spring.kafka.producer.bootstrap-servers=" + KAFKA_CONTAINER.getBootstrapServers(),
+                    "spring.kafka.topic=" + TOPIC_NAME
             ).applyTo(configurableApplicationContext.getEnvironment());
         }
     }
