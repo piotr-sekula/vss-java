@@ -16,12 +16,9 @@ public class KafkaSupport {
     public static KafkaConsumer<String, String> createKafkaConsumer(KafkaContainer kafkaContainer) {
         return new KafkaConsumer<>(
                 ImmutableMap.of(
-                        ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                        kafkaContainer.getBootstrapServers(),
-                        ConsumerConfig.GROUP_ID_CONFIG,
-                        "tc-" + UUID.randomUUID(),
-                        ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
-                        "earliest"
+                        ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers(),
+                        ConsumerConfig.GROUP_ID_CONFIG, "test.-" + UUID.randomUUID(),
+                        ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"
                 ),
                 new StringDeserializer(),
                 new StringDeserializer()
@@ -39,7 +36,6 @@ public class KafkaSupport {
             break;
         }
         adminClient.close();
-
     }
 
     public static void resetKafka(KafkaContainer kafkaContainer) {
