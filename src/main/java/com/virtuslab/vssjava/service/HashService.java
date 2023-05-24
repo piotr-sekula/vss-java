@@ -21,16 +21,22 @@ public class HashService {
     }
 
     public Password calculatePasswordHash(HashRequest request) {
+        Password password;
 
-        final var digest = DigestUtils
-                .getDigest(request.hashType())
-                .digest(request.password().getBytes());
+        try {
+            final var digest = DigestUtils
+                    .getDigest(request.hashType())
+                    .digest(request.password().getBytes());
 
-        final var password = new Password(
-                request.hashType(),
-                request.password(),
-                HexUtils.toHexString(digest)
-        );
+            password = new Password(
+                    request.hashType(),
+                    request.password(),
+                    HexUtils.toHexString(digest)
+            );
+        } catch (IllegalArgumentException e) {
+            throw new UnknownAlgorithmException("Unknown hashing algorithm: " + request.hashType());
+        }
+
 
         passwordRepository.save(password);
         eventPublisher.publishEvent(PasswordSavedEvent.fromPassword(password));
